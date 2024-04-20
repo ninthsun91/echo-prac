@@ -11,10 +11,12 @@ type User struct {
 	Name     string
 	Email    string
 	Password string
+	Posts    []Post `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }
 
 type Post struct {
 	gorm.Model
+	UserID  uint
 	Title   string
 	Content string
 	File    sql.NullString
