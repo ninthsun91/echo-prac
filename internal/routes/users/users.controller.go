@@ -1,6 +1,7 @@
 package users
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -44,6 +45,10 @@ func (UsersRouter) FindUser(c echo.Context) error {
 	var user models.User
 	result := db.First(&user, id)
 	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return c.String(http.StatusNotFound, "User not found")
+		}
+
 		c.Logger().Errorf("Failed to find user: %v", result.Error)
 		return c.String(http.StatusInternalServerError, "Internal Server Error")
 	}
@@ -71,10 +76,14 @@ func (UsersRouter) UpdateUser(c echo.Context) error {
 
 	db := c.Get("db").(*gorm.DB)
 	var user models.User
+
 	findResult := db.First(&user, id)
 	if findResult.Error != nil {
+		if errors.Is(findResult.Error, gorm.ErrRecordNotFound) {
+			return c.String(http.StatusNotFound, "User not found")
+		}
 		c.Logger().Errorf("Failed to find user: %v", findResult.Error)
-		return c.String(http.StatusNotFound, "User Not Found")
+		return c.String(http.StatusInternalServerError, "Internal Server Error")
 	}
 
 	updateResult := db.Model(&user).Updates(body.toMap())
