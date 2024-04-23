@@ -14,17 +14,17 @@ func TestConnectDatabase(t *testing.T) {
 	os.Setenv("DB_PASS", "qwe123123")
 	os.Setenv("DB_NAME", "test")
 	os.Setenv("DB_PORT", "5432")
-	db.ConnectDatabase()
+	db := db.ConnectDatabase()
 
-	if db.DB == nil {
+	if db == nil {
 		t.Fatalf("DB is nil")
 	}
 
-	if !db.DB.Migrator().HasTable(&models.User{}) {
+	if !db.Migrator().HasTable(&models.User{}) {
 		t.Fatalf("users table does not exist")
 	}
 
-	if !db.DB.Migrator().HasTable(&models.Post{}) {
+	if !db.Migrator().HasTable(&models.Post{}) {
 		t.Fatalf("posts table does not exist")
 	}
 }
