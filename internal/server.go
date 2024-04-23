@@ -8,31 +8,25 @@ import (
 
 	"myapp/internal/db"
 	"myapp/internal/db/models"
-	"myapp/internal/validator"
+	"myapp/internal/lib/middlewares"
+	"myapp/internal/lib/validator"
 )
 
-type Server struct {
-	e  *echo.Echo
-	db *gorm.DB
-}
-
-func NewServer() *Server {
+func Init(addr string) {
 	e := echo.New()
+
+	e.Validator = validator.SetCustomValidator()
+
 	db := db.ConnectDatabase()
+	e.Use(middlewares.ContextDB(db))
 
-	return &Server{e, db}
-}
-
-func (s *Server) Start(addr string) {
-	s.e.Validator = validator.SetCustomValidator()
-
-	s.e.GET("/", func(c echo.Context) error {
+	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
 
-	s.e.POST("/users", s.signupHandler)
+	e.POST("/users", signupHandler)
 
-	s.e.Logger.Fatal(s.e.Start(addr))
+	e.Logger.Fatal(e.Start(addr))
 }
 
 type SignupRequestBody struct {
@@ -49,7 +43,7 @@ func (b *SignupRequestBody) toUser() models.User {
 	}
 }
 
-func (s *Server) signupHandler(c echo.Context) error {
+func signupHandler(c echo.Context) error {
 	body := new(SignupRequestBody)
 	if err := c.Bind(&body); err != nil {
 		return c.String(http.StatusBadRequest, "Bad Request")
@@ -60,8 +54,9 @@ func (s *Server) signupHandler(c echo.Context) error {
 		return err
 	}
 
+	db := c.Get("db").(*gorm.DB)
 	user := body.toUser()
-	result := s.db.Create(&user)
+	result := db.Create(&user)
 	if result.Error != nil {
 		c.Logger().Errorf("Failed to create user: %v", result.Error)
 		return c.String(http.StatusInternalServerError, "Internal Server Error")

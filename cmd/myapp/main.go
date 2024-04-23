@@ -14,6 +14,5 @@ func main() {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
 
-	server := server.NewServer()
-	server.Start(":1323")
+	server.Init(":1323")
 }
