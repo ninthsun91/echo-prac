@@ -1,11 +1,11 @@
-package database
+package db
 
 import (
 	"fmt"
 	"log"
 	"os"
 
-	"myapp/models"
+	"myapp/internal/db/models"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

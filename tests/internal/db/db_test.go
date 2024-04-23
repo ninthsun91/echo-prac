@@ -1,10 +1,11 @@
-package database
+package db
 
 import (
 	"os"
 	"testing"
 
-	"myapp/models"
+	"myapp/internal/db"
+	"myapp/internal/db/models"
 )
 
 func TestConnectDatabase(t *testing.T) {
@@ -13,17 +14,17 @@ func TestConnectDatabase(t *testing.T) {
 	os.Setenv("DB_PASS", "qwe123123")
 	os.Setenv("DB_NAME", "test")
 	os.Setenv("DB_PORT", "5432")
-	ConnectDatabase()
+	db.ConnectDatabase()
 
-	if DB == nil {
+	if db.DB == nil {
 		t.Fatalf("DB is nil")
 	}
 
-	if !DB.Migrator().HasTable(&models.User{}) {
+	if !db.DB.Migrator().HasTable(&models.User{}) {
 		t.Fatalf("users table does not exist")
 	}
 
-	if !DB.Migrator().HasTable(&models.Post{}) {
+	if !db.DB.Migrator().HasTable(&models.Post{}) {
 		t.Fatalf("posts table does not exist")
 	}
 }

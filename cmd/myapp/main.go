@@ -4,25 +4,13 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 
-	"myapp/database"
-	"myapp/models"
+	"myapp/internal/db"
+	"myapp/internal/db/models"
+	"myapp/internal/validator"
 )
-
-type CustomValidator struct {
-	validator *validator.Validate
-}
-
-func (cv *CustomValidator) Validate(i interface{}) error {
-	if err := cv.validator.Struct(i); err != nil {
-		echo.New().AcquireContext().Logger().Errorf("Failed to validate request body: %v", err)
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
-	}
-	return nil
-}
 
 func main() {
 	err := godotenv.Load()
@@ -31,11 +19,9 @@ func main() {
 	}
 
 	e := echo.New()
-	database.ConnectDatabase()
+	db.ConnectDatabase()
 
-	e.Validator = &CustomValidator{
-		validator: validator.New(validator.WithRequiredStructEnabled()),
-	}
+	e.Validator = validator.SetCustomValidator()
 
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
@@ -72,7 +58,7 @@ func signupHandler(c echo.Context) error {
 	}
 
 	user := body.toUser()
-	result := database.DB.Create(&user)
+	result := db.DB.Create(&user)
 	if result.Error != nil {
 		c.Logger().Errorf("Failed to create user: %v", result.Error)
 		return c.String(http.StatusInternalServerError, "Internal Server Error")
