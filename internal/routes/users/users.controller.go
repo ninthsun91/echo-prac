@@ -95,6 +95,34 @@ func (UsersRouter) UpdateUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, user)
 }
 
+func (UsersRouter) DeleteUser(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.Logger().Errorf("Invalid user ID: %v", err)
+		return c.String(http.StatusBadRequest, "Bad Request")
+	}
+
+	db := c.Get("db").(*gorm.DB)
+	var user models.User
+
+	findResult := db.First(&user, id)
+	if findResult.Error != nil {
+		if errors.Is(findResult.Error, gorm.ErrRecordNotFound) {
+			return c.String(http.StatusNotFound, "User not found")
+		}
+		c.Logger().Errorf("Failed to find user: %v", findResult.Error)
+		return c.String(http.StatusInternalServerError, "Internal Server Error")
+	}
+
+	deleteResult := db.Delete(&user)
+	if deleteResult.Error != nil {
+		c.Logger().Errorf("Failed to delete user: %v", deleteResult.Error)
+		return c.String(http.StatusInternalServerError, "Internal Server Error")
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
 type SignupRequestBody struct {
 	Name     string `json:"name" validate:"required"`
 	Email    string `json:"email" validate:"required,email"`
