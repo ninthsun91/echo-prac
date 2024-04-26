@@ -4,7 +4,6 @@ import (
 	"os"
 	"testing"
 
-	"myapp/internal/db"
 	"myapp/internal/db/models"
 )
 
@@ -14,7 +13,7 @@ func TestConnectDatabase(t *testing.T) {
 	os.Setenv("DB_PASS", "qwe123123")
 	os.Setenv("DB_NAME", "test")
 	os.Setenv("DB_PORT", "5432")
-	db := db.ConnectDatabase()
+	db := ConnectDatabase()
 
 	if db == nil {
 		t.Fatalf("DB is nil")
