@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"myapp/internal/db/models"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestConnectDatabase(t *testing.T) {
@@ -13,17 +15,14 @@ func TestConnectDatabase(t *testing.T) {
 	os.Setenv("DB_PASS", "qwe123123")
 	os.Setenv("DB_NAME", "test")
 	os.Setenv("DB_PORT", "5432")
+
 	db := ConnectDatabase()
 
-	if db == nil {
-		t.Fatalf("DB is nil")
-	}
+	assert.NotNil(t, db, "db connection failed")
 
-	if !db.Migrator().HasTable(&models.User{}) {
-		t.Fatalf("users table does not exist")
-	}
+	hasUserTable := db.Migrator().HasTable(&models.User{})
+	assert.True(t, hasUserTable, "missing user table")
 
-	if !db.Migrator().HasTable(&models.Post{}) {
-		t.Fatalf("posts table does not exist")
-	}
+	hasPostTable := db.Migrator().HasTable(&models.Post{})
+	assert.True(t, hasPostTable, "missing post table")
 }
