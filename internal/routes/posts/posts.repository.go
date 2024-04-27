@@ -20,5 +20,8 @@ func NewPostsRepository(db *gorm.DB) PostsRepository {
 
 func (r *postsRepository) Create(post models.Post) (models.Post, error) {
 	result := r.db.Create(&post)
-	return post, result.Error
+	if result.Error != nil {
+		return models.Post{}, result.Error
+	}
+	return post, nil
 }
