@@ -11,11 +11,11 @@ type PostsController struct {
 	repo PostsRepository
 }
 
-func NewPostsController(repo PostsRepository) PostsController {
-	return PostsController{repo}
+func NewPostsController(repo PostsRepository) *PostsController {
+	return &PostsController{repo}
 }
 
-func (posts PostsController) Create(c echo.Context) error {
+func (posts *PostsController) Create(c echo.Context) error {
 	var body PostCreateRequestBody
 	if err := c.Bind(&body); err != nil {
 		c.Logger().Errorf("Failed to bind request body: %v", err)

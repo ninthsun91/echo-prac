@@ -15,10 +15,10 @@ type postsRepository struct {
 }
 
 func NewPostsRepository(db *gorm.DB) PostsRepository {
-	return postsRepository{db}
+	return &postsRepository{db}
 }
 
-func (r postsRepository) Create(post models.Post) (models.Post, error) {
+func (r *postsRepository) Create(post models.Post) (models.Post, error) {
 	result := r.db.Create(&post)
 	return post, result.Error
 }
