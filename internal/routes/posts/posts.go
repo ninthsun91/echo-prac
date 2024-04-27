@@ -12,4 +12,5 @@ func PostsRouter(g *echo.Group, db *gorm.DB) {
 	g.POST("", controller.Create)
 	g.GET("/:id", controller.FindOne)
 	g.PATCH("/:id", controller.Update)
+	g.DELETE("/:id", controller.Delete)
 }

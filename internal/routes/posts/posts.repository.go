@@ -10,6 +10,7 @@ type PostsRepository interface {
 	Create(post models.Post) (models.Post, error)
 	FindById(id uint) (models.Post, error)
 	Update(id uint, data map[string]interface{}) (models.Post, error)
+	Delete(id uint) error
 }
 
 type postsRepository struct {
@@ -39,7 +40,7 @@ func (r *postsRepository) FindById(id uint) (models.Post, error) {
 
 func (r *postsRepository) Update(id uint, data map[string]interface{}) (models.Post, error) {
 	var post models.Post
-	findResult := r.db.Find(&post, id)
+	findResult := r.db.First(&post, id)
 	if findResult.Error != nil {
 		return models.Post{}, findResult.Error
 	}
@@ -48,4 +49,17 @@ func (r *postsRepository) Update(id uint, data map[string]interface{}) (models.P
 		return models.Post{}, updateResult.Error
 	}
 	return post, nil
+}
+
+func (r *postsRepository) Delete(id uint) error {
+	var post models.Post
+	findResult := r.db.First(&post, id)
+	if findResult.Error != nil {
+		return findResult.Error
+	}
+	deleteResult := r.db.Delete(&post)
+	if deleteResult.Error != nil {
+		return deleteResult.Error
+	}
+	return nil
 }

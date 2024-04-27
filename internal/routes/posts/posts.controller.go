@@ -89,6 +89,25 @@ func (posts *PostsController) Update(c echo.Context) error {
 	return c.JSON(http.StatusOK, post)
 }
 
+func (posts *PostsController) Delete(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if (err != nil) || (id < 1) {
+		c.Logger().Errorf("Invalid post ID: %v", err)
+		return c.String(http.StatusBadRequest, "Bad Request")
+	}
+
+	err = posts.repo.Delete(uint(id))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.String(http.StatusNotFound, "Post not found")
+		}
+		c.Logger().Errorf("Failed to delete post: %v", err)
+		return c.String(http.StatusInternalServerError, "Internal Server Error")
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
 type PostCreateRequestBody struct {
 	Title   string `json:"title" validate:"required"`
 	Content string `json:"content" validate:"required"`
