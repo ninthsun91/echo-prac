@@ -1,10 +1,14 @@
 package posts
 
 import (
-	"myapp/internal/db/models"
+	"errors"
 	"net/http"
+	"strconv"
+
+	"myapp/internal/db/models"
 
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
 type PostsController struct {
@@ -34,6 +38,25 @@ func (posts *PostsController) Create(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, post)
+}
+
+func (posts *PostsController) FindPost(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if (err != nil) || (id < 1) {
+		c.Logger().Errorf("Invalid post ID: %v", err)
+		return c.String(http.StatusBadRequest, "Bad Request")
+	}
+
+	post, err := posts.repo.FindById(uint(id))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.String(http.StatusNotFound, "Post not found")
+		}
+		c.Logger().Errorf("Failed to find post: %v", err)
+		return c.String(http.StatusInternalServerError, "Internal Server Error")
+	}
+
+	return c.JSON(http.StatusOK, post)
 }
 
 type PostCreateRequestBody struct {

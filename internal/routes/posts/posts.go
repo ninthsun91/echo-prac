@@ -10,4 +10,5 @@ func PostsRouter(g *echo.Group, db *gorm.DB) {
 	controller := NewPostsController(repository)
 
 	g.POST("", controller.Create)
+	g.GET("/:id", controller.FindPost)
 }
