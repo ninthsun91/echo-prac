@@ -1,12 +1,15 @@
 package tests
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"myapp/internal/db"
+	"myapp/internal/db/models"
 	"myapp/internal/lib/middlewares"
 	"myapp/internal/routes/posts"
 
@@ -29,14 +32,21 @@ func TestFindOne(t *testing.T) {
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
+	var postId uint = 1
 	c.SetPath("/posts/:id")
 	c.SetParamNames("id")
-	c.SetParamValues("1")
+	c.SetParamValues(strconv.FormatUint(uint64(postId), 10))
 
 	repo := posts.NewPostsRepository(db)
 	controller := posts.NewPostsController(repo)
 
 	if assert.NoError(t, controller.FindOne(c)) {
 		assert.Equal(t, http.StatusOK, rec.Code)
+
+		var post models.Post
+		err := json.NewDecoder(rec.Body).Decode(&post)
+		assert.NoError(t, err)
+		assert.NotNil(t, post)
+		assert.Equal(t, postId, post.ID)
 	}
 }
