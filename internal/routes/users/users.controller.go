@@ -11,7 +11,15 @@ import (
 	"myapp/internal/db/models"
 )
 
-func (UsersRouter) Signup(c echo.Context) error {
+type UsersController struct {
+	repo UsersRepository
+}
+
+func NewUsersController(repo UsersRepository) *UsersController {
+	return &UsersController{repo}
+}
+
+func (uc *UsersController) Signup(c echo.Context) error {
 	var body SignupRequestBody
 	if err := c.Bind(&body); err != nil {
 		c.Logger().Errorf("Failed to bind request body: %v", err)
@@ -23,40 +31,36 @@ func (UsersRouter) Signup(c echo.Context) error {
 		return err
 	}
 
-	db := c.Get("db").(*gorm.DB)
-	user := body.toUser()
-	result := db.Create(&user)
-	if result.Error != nil {
-		c.Logger().Errorf("Failed to create user: %v", result.Error)
+	user, err := uc.repo.Create(body.toUser())
+	if err != nil {
+		c.Logger().Errorf("Failed to create user: %v", err)
 		return c.String(http.StatusInternalServerError, "Internal Server Error")
 	}
 
 	return c.JSON(http.StatusCreated, user)
 }
 
-func (UsersRouter) FindUser(c echo.Context) error {
+func (uc *UsersController) FindUser(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.Logger().Errorf("Invalid user ID: %v", err)
 		return c.String(http.StatusBadRequest, "Bad Request")
 	}
 
-	db := c.Get("db").(*gorm.DB)
-	var user models.User
-	result := db.First(&user, id)
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+	user, err := uc.repo.FindById(uint(id))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return c.String(http.StatusNotFound, "User not found")
 		}
 
-		c.Logger().Errorf("Failed to find user: %v", result.Error)
+		c.Logger().Errorf("Failed to find user: %v", err)
 		return c.String(http.StatusInternalServerError, "Internal Server Error")
 	}
 
 	return c.JSON(http.StatusOK, user)
 }
 
-func (UsersRouter) UpdateUser(c echo.Context) error {
+func (uc *UsersController) UpdateUser(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.Logger().Errorf("Invalid user ID: %v", err)
@@ -74,49 +78,31 @@ func (UsersRouter) UpdateUser(c echo.Context) error {
 		return err
 	}
 
-	db := c.Get("db").(*gorm.DB)
-	var user models.User
-
-	findResult := db.First(&user, id)
-	if findResult.Error != nil {
-		if errors.Is(findResult.Error, gorm.ErrRecordNotFound) {
+	user, err := uc.repo.Update(uint(id), body.toMap())
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return c.String(http.StatusNotFound, "User not found")
 		}
-		c.Logger().Errorf("Failed to find user: %v", findResult.Error)
-		return c.String(http.StatusInternalServerError, "Internal Server Error")
-	}
-
-	updateResult := db.Model(&user).Updates(body.toMap())
-	if updateResult.Error != nil {
-		c.Logger().Errorf("Failed to update user: %v", updateResult.Error)
+		c.Logger().Errorf("Failed to update user: %v", err)
 		return c.String(http.StatusInternalServerError, "Internal Server Error")
 	}
 
 	return c.JSON(http.StatusOK, user)
 }
 
-func (UsersRouter) DeleteUser(c echo.Context) error {
+func (uc *UsersController) DeleteUser(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.Logger().Errorf("Invalid user ID: %v", err)
 		return c.String(http.StatusBadRequest, "Bad Request")
 	}
 
-	db := c.Get("db").(*gorm.DB)
-	var user models.User
-
-	findResult := db.First(&user, id)
-	if findResult.Error != nil {
-		if errors.Is(findResult.Error, gorm.ErrRecordNotFound) {
+	err = uc.repo.Delete(uint(id))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return c.String(http.StatusNotFound, "User not found")
 		}
-		c.Logger().Errorf("Failed to find user: %v", findResult.Error)
-		return c.String(http.StatusInternalServerError, "Internal Server Error")
-	}
-
-	deleteResult := db.Delete(&user)
-	if deleteResult.Error != nil {
-		c.Logger().Errorf("Failed to delete user: %v", deleteResult.Error)
+		c.Logger().Errorf("Failed to delete user: %v", err)
 		return c.String(http.StatusInternalServerError, "Internal Server Error")
 	}
 

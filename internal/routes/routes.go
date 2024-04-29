@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func Routes(g *echo.Group, db *gorm.DB) {
-	users.UsersRouter{}.Init(g.Group("/users"))
-	posts.PostsRouter(g.Group("/posts"), db)
+func Init(g *echo.Group, db *gorm.DB) {
+	users.MapRoutes(g.Group("/users"), db)
+	posts.MapRoutes(g.Group("/posts"), db)
 }

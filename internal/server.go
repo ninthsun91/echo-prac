@@ -23,7 +23,7 @@ func Init(addr string) {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
 
-	routes.Routes(e.Group("api"), db)
+	routes.Init(e.Group("api"), db)
 
 	e.Logger.Fatal(e.Start(addr))
 }

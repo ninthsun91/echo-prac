@@ -2,11 +2,13 @@ package users
 
 import (
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
-type UsersRouter struct{}
+func MapRoutes(g *echo.Group, db *gorm.DB) {
+	repository := NewUsersRepository(db)
+	controller := NewUsersController(repository)
 
-func (controller UsersRouter) Init(g *echo.Group) {
 	g.POST("", controller.Signup)
 	g.GET("/:id", controller.FindUser)
 	g.PATCH("/:id", controller.UpdateUser)

@@ -5,7 +5,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func PostsRouter(g *echo.Group, db *gorm.DB) {
+func MapRoutes(g *echo.Group, db *gorm.DB) {
 	repository := NewPostsRepository(db)
 	controller := NewPostsController(repository)
 
