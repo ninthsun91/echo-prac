@@ -45,7 +45,7 @@ func InitContext(method, target string, body interface{}) (echo.Context, *gorm.D
 	return c, db
 }
 
-func InitServer() *httptest.Server {
+func InitServer() (*httptest.Server, *gorm.DB) {
 	err := godotenv.Load("../.env")
 	if err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
@@ -61,5 +61,5 @@ func InitServer() *httptest.Server {
 	routes.Init(e.Group("api"), db)
 
 	ts := httptest.NewServer(e)
-	return ts
+	return ts, db
 }

@@ -13,7 +13,7 @@ import (
 )
 
 func TestSignUpE2e(t *testing.T) {
-	ts := InitServer()
+	ts, db := InitServer()
 	defer ts.Close()
 
 	url := fmt.Sprintf("%s/api/users", ts.URL)
@@ -74,5 +74,10 @@ func TestSignUpE2e(t *testing.T) {
 		assert.NotNil(t, user)
 		assert.Equal(t, form.Name, user.Name)
 		assert.Equal(t, form.Email, user.Email)
+
+		t.Cleanup(func() {
+			result := db.Unscoped().Delete(&user)
+			fmt.Println("Cleanup: ", user.ID, result.Error)
+		})
 	})
 }

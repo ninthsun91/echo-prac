@@ -12,7 +12,7 @@ import (
 )
 
 func TestFindOne(t *testing.T) {
-	ts := InitServer()
+	ts, _ := InitServer()
 	defer ts.Close()
 
 	setUrl := func(id uint) string {
