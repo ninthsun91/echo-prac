@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"testing"
@@ -50,9 +49,7 @@ func TestFindOne(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		var post models.Post
-		err = json.NewDecoder(resp.Body).Decode(&post)
-		assert.NoError(t, err)
+		post := DecodeResBody[models.Post](t, resp)
 		assert.NotNil(t, post)
 		assert.Equal(t, postId, post.ID)
 	})

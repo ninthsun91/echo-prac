@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"myapp/internal/db/models"
-	"myapp/internal/routes/users"
 	"net/http"
 	"testing"
+
+	"myapp/internal/db/models"
+	"myapp/internal/routes/users"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -55,12 +56,9 @@ func TestSignUpE2e(t *testing.T) {
 			Email:    "John@test.com",
 			Password: "qwe1234",
 		}
-		data, err := json.Marshal(form)
-		if err != nil {
-			t.Fatalf("Error marshalling request body: %v", err)
-		}
+		body := EncodeReqBody(t, form)
 
-		resp, err := http.Post(url, "application/json", bytes.NewBuffer(data))
+		resp, err := http.Post(url, "application/json", body)
 		if err != nil {
 			t.Fatalf("Error sending POST request: %v", err)
 		}
@@ -68,9 +66,7 @@ func TestSignUpE2e(t *testing.T) {
 
 		assert.Equal(t, http.StatusCreated, resp.StatusCode)
 
-		var user models.User
-		err = json.NewDecoder(resp.Body).Decode(&user)
-		assert.NoError(t, err)
+		user := DecodeResBody[models.User](t, resp)
 		assert.NotNil(t, user)
 		assert.Equal(t, form.Name, user.Name)
 		assert.Equal(t, form.Email, user.Email)

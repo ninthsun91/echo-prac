@@ -11,6 +11,7 @@ import (
 	"myapp/internal/routes"
 	"net/http"
 	"net/http/httptest"
+	"testing"
 
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
@@ -62,4 +63,20 @@ func InitServer() (*httptest.Server, *gorm.DB) {
 
 	ts := httptest.NewServer(e)
 	return ts, db
+}
+
+func EncodeReqBody(t *testing.T, body interface{}) io.Reader {
+	data, err := json.Marshal(body)
+	if err != nil {
+		t.Fatalf("Error marshalling request body: %v", err)
+	}
+	return bytes.NewBuffer(data)
+}
+
+func DecodeResBody[T any](t *testing.T, resp *http.Response) T {
+	var v T
+	if err := json.NewDecoder(resp.Body).Decode(&v); err != nil {
+		t.Fatalf("Error decoding response body: %v", err)
+	}
+	return v
 }
