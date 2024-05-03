@@ -3,9 +3,11 @@ package tests
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"log"
 	"myapp/internal/db"
 	"myapp/internal/lib/middlewares"
+	"myapp/internal/lib/validator"
 	"myapp/internal/routes"
 	"net/http"
 	"net/http/httptest"
@@ -23,6 +25,8 @@ func InitContext(method, target string, body interface{}) (echo.Context, *gorm.D
 
 	e := echo.New()
 	db := db.ConnectDatabase()
+
+	e.Validator = validator.SetCustomValidator()
 	e.Use(middlewares.ContextDB(db))
 
 	var req *http.Request
@@ -49,7 +53,10 @@ func InitServer() *httptest.Server {
 
 	e := echo.New()
 	db := db.ConnectDatabase()
+
 	e.Use(middlewares.ContextDB(db))
+	e.Validator = validator.SetCustomValidator()
+	e.Logger.SetOutput(io.Discard)
 
 	routes.Init(e.Group("api"), db)
 

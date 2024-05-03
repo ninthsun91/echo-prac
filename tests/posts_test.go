@@ -19,7 +19,7 @@ func TestFindOne(t *testing.T) {
 		return fmt.Sprintf("%s/api/posts/%d", ts.URL, id)
 	}
 
-	t.Run("status 400 with invalid post ID", func(t *testing.T) {
+	t.Run("400 - invalid post ID", func(t *testing.T) {
 		resp, err := http.Get(setUrl(0))
 		if err != nil {
 			t.Fatalf("Error sending GET request: %v", err)
@@ -29,7 +29,7 @@ func TestFindOne(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
 
-	t.Run("status 404 with post not found", func(t *testing.T) {
+	t.Run("404 - post not found", func(t *testing.T) {
 		postId := uint(999)
 		resp, err := http.Get(setUrl(postId))
 		if err != nil {
@@ -40,7 +40,7 @@ func TestFindOne(t *testing.T) {
 		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 	})
 
-	t.Run("status 200 with post found", func(t *testing.T) {
+	t.Run("200 - post found", func(t *testing.T) {
 		postId := uint(1)
 		resp, err := http.Get(setUrl(postId))
 		if err != nil {
