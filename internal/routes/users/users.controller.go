@@ -42,7 +42,7 @@ func (uc *UsersController) Signup(c echo.Context) error {
 
 func (uc *UsersController) FindUser(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
+	if (err != nil) || (id < 1) {
 		c.Logger().Errorf("Invalid user ID: %v", err)
 		return c.String(http.StatusBadRequest, "Bad Request")
 	}
@@ -62,7 +62,7 @@ func (uc *UsersController) FindUser(c echo.Context) error {
 
 func (uc *UsersController) UpdateUser(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
+	if (err != nil) || (id < 1) {
 		c.Logger().Errorf("Invalid user ID: %v", err)
 		return c.String(http.StatusBadRequest, "Bad Request")
 	}
@@ -92,7 +92,7 @@ func (uc *UsersController) UpdateUser(c echo.Context) error {
 
 func (uc *UsersController) DeleteUser(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
+	if (err != nil) || (id < 1) {
 		c.Logger().Errorf("Invalid user ID: %v", err)
 		return c.String(http.StatusBadRequest, "Bad Request")
 	}

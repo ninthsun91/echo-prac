@@ -77,3 +77,65 @@ func TestSignUpE2e(t *testing.T) {
 		})
 	})
 }
+
+func TestFindUserE2e(t *testing.T) {
+	ts, _ := InitServer()
+	defer ts.Close()
+
+	setUrl := func(id any) string {
+		return fmt.Sprintf("%s/api/users/%v", ts.URL, id)
+	}
+
+	cases := []struct {
+		message string
+		id      any
+	}{
+		{"id is 0", 0},
+		{"id is negative", -1},
+		{"mixture of characters", "qwe123"},
+		{"missing id", nil},
+	}
+	for _, tc := range cases {
+		t.Run(fmt.Sprintf("[400]%s", tc.message), func(t *testing.T) {
+			url := setUrl(tc.id)
+
+			resp, err := http.Get(url)
+			if err != nil {
+				t.Fatalf("Request Error GET %s : %v", url, err)
+			}
+			defer resp.Body.Close()
+
+			assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		})
+	}
+
+	t.Run("[404]user not found", func(t *testing.T) {
+		userId := uint(999)
+		url := setUrl(userId)
+
+		resp, err := http.Get(url)
+		if err != nil {
+			t.Fatalf("Request Error: GET %s - %v", url, err)
+		}
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+	})
+
+	t.Run("[200]user found", func(t *testing.T) {
+		userId := uint(1)
+		url := setUrl(userId)
+
+		resp, err := http.Get(url)
+		if err != nil {
+			t.Fatalf("Request Error: GET %s - %v", url, err)
+		}
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		user := DecodeResBody[models.User](t, resp)
+		assert.NotNil(t, user)
+		assert.Equal(t, userId, user.ID)
+	})
+}
