@@ -166,3 +166,113 @@ func testFindUser(t *testing.T, env *UserE2e) {
 		assert.Equal(t, env.testuser.Email, user.Email)
 	})
 }
+
+func TestUpdateUser(t *testing.T) {
+	testUpdateUser(t, userE2eEnv)
+}
+func testUpdateUser(t *testing.T, env *UserE2e) {
+	setUrl := func(id any) string {
+		return fmt.Sprintf("%s/api/users/%v", env.ts.URL, id)
+	}
+
+	idCases := []struct {
+		message string
+		id      any
+	}{
+		{"id is 0", 0},
+		{"id is negative", -1},
+		{"mixture of characters", "qwe123"},
+		{"missing id", nil},
+	}
+	for _, tc := range idCases {
+		t.Run(fmt.Sprintf("[400]%s", tc.message), func(t *testing.T) {
+			url := setUrl(tc.id)
+			body := EncodeReqBody(t, users.UpdateUserRequestBody{})
+
+			req, err := http.NewRequest(http.MethodPatch, url, body)
+			req.Header.Set("Content-Type", "application/json")
+			if err != nil {
+				t.Fatalf("Error creating PATCH request: %v", err)
+			}
+
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				t.Fatalf("Error sending PATCH request: %v", err)
+			}
+			defer resp.Body.Close()
+
+			assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		})
+	}
+
+	bodyCases := []struct {
+		message string
+		form    users.UpdateUserRequestBody
+	}{
+		{"password too short", users.UpdateUserRequestBody{Name: "John", Password: "1234"}},
+		{"password too long", users.UpdateUserRequestBody{Name: "John", Password: "123456789012345678901"}},
+	}
+	for _, tc := range bodyCases {
+		t.Run(fmt.Sprintf("[400]%s", tc.message), func(t *testing.T) {
+			url := setUrl(env.testuser.ID)
+			body := EncodeReqBody(t, tc.form)
+
+			req, err := http.NewRequest(http.MethodPatch, url, body)
+			req.Header.Set("Content-Type", "application/json")
+			if err != nil {
+				t.Fatalf("Error creating PATCH request: %v", err)
+			}
+
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				t.Fatalf("Error sending PATCH request: %v", err)
+			}
+			defer resp.Body.Close()
+
+			assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		})
+	}
+
+	t.Run("[404]user not found", func(t *testing.T) {
+		url := setUrl(uint(999))
+		body := EncodeReqBody(t, users.UpdateUserRequestBody{Name: "Updated", Password: "qwe1234"})
+
+		req, err := http.NewRequest(http.MethodPatch, url, body)
+		req.Header.Set("Content-Type", "application/json")
+		if err != nil {
+			t.Fatalf("Error creating PATCH request: %v", err)
+		}
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatalf("Error sending PATCH request: %v", err)
+		}
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+	})
+
+	t.Run("[200]user updated", func(t *testing.T) {
+		url := setUrl(env.testuser.ID)
+		form := users.UpdateUserRequestBody{Name: "Updated"}
+		body := EncodeReqBody(t, form)
+
+		req, err := http.NewRequest(http.MethodPatch, url, body)
+		req.Header.Set("Content-Type", "application/json")
+		if err != nil {
+			t.Fatalf("Error creating PATCH request: %v", err)
+		}
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatalf("Error sending PATCH request: %v", err)
+		}
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		user := DecodeResBody[models.User](t, resp)
+		assert.Equal(t, env.testuser.ID, user.ID)
+		assert.Equal(t, form.Name, user.Name)
+	})
+}
