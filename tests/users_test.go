@@ -276,3 +276,83 @@ func testUpdateUser(t *testing.T, env *UserE2e) {
 		assert.Equal(t, form.Name, user.Name)
 	})
 }
+
+func TestDeleteUser(t *testing.T) {
+	testDeleteUser(t, userE2eEnv)
+}
+func testDeleteUser(t *testing.T, env *UserE2e) {
+	setUrl := func(id any) string {
+		return fmt.Sprintf("%s/api/users/%v", env.ts.URL, id)
+	}
+
+	idCases := []struct {
+		message string
+		id      any
+	}{
+		{"id is 0", 0},
+		{"id is negative", -1},
+		{"mixture of characters", "qwe123"},
+		{"missing id", nil},
+	}
+	for _, tc := range idCases {
+		t.Run(fmt.Sprintf("[400]%s", tc.message), func(t *testing.T) {
+			url := setUrl(tc.id)
+
+			req, err := http.NewRequest(http.MethodDelete, url, nil)
+			if err != nil {
+				t.Fatalf("Error creating DELETE request: %v", err)
+			}
+
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				t.Fatalf("Error sending DELETE request: %v", err)
+			}
+			defer resp.Body.Close()
+
+			assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		})
+	}
+
+	t.Run("[404]user not found", func(t *testing.T) {
+		url := setUrl(uint(999))
+
+		req, err := http.NewRequest(http.MethodDelete, url, nil)
+		if err != nil {
+			t.Fatalf("Error creating DELETE request: %v", err)
+		}
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatalf("Error sending DELETE request: %v", err)
+		}
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+	})
+
+	t.Run("[204]user deleted", func(t *testing.T) {
+		url := setUrl(env.testuser.ID)
+
+		req, err := http.NewRequest(http.MethodDelete, url, nil)
+		if err != nil {
+			t.Fatalf("Error creating DELETE request: %v", err)
+		}
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatalf("Error sending DELETE request: %v", err)
+		}
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusNoContent, resp.StatusCode)
+
+		var user models.User
+		result := env.db.Unscoped().Find(&user, env.testuser.ID)
+		if assert.NoError(t, result.Error) {
+			assert.Equal(t, env.testuser.ID, user.ID)
+			assert.NotEqual(t, env.testuser.DeletedAt, user.DeletedAt)
+		} else {
+			t.Fatalf("Error finding deleted user: %v", result.Error)
+		}
+	})
+}
