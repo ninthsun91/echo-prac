@@ -16,25 +16,39 @@ import (
 	"gorm.io/gorm"
 )
 
-var testuser models.User
-var ts *httptest.Server
+var userE2eEnv *UserE2e
+
+type UserE2e struct {
+	testuser models.User
+	ts       *httptest.Server
+	db       *gorm.DB
+}
 
 func TestMain(m *testing.M) {
-	var db *gorm.DB
-	ts, db = InitServer()
+	userE2eEnv = &UserE2e{}
+	userE2eEnv.Setup()
+
 	code := m.Run()
-	teardown(ts, db)
+
+	userE2eEnv.teardown()
 	os.Exit(code)
 }
 
-func teardown(ts *httptest.Server, db *gorm.DB) {
-	result := db.Unscoped().Delete(&testuser)
-	fmt.Printf("Cleanup test user %d: %v", testuser.ID, result.Error)
-	ts.Close()
+func (env *UserE2e) Setup() {
+	env.ts, env.db = InitServer()
 }
 
-func TestSignUpE2e(t *testing.T) {
-	url := fmt.Sprintf("%s/api/users", ts.URL)
+func (env *UserE2e) teardown() {
+	result := env.db.Unscoped().Delete(&env.testuser)
+	fmt.Printf("Cleanup test user %d: %v", env.testuser.ID, result.Error)
+	env.ts.Close()
+}
+
+func TestSignup(t *testing.T) {
+	testSignUp(t, userE2eEnv)
+}
+func testSignUp(t *testing.T, env *UserE2e) {
+	url := fmt.Sprintf("%s/api/users", env.ts.URL)
 
 	cases := []struct {
 		message string
@@ -83,16 +97,19 @@ func TestSignUpE2e(t *testing.T) {
 
 		assert.Equal(t, http.StatusCreated, resp.StatusCode)
 
-		testuser = DecodeResBody[models.User](t, resp)
-		assert.NotNil(t, testuser)
-		assert.Equal(t, form.Name, testuser.Name)
-		assert.Equal(t, form.Email, testuser.Email)
+		env.testuser = DecodeResBody[models.User](t, resp)
+		assert.NotNil(t, env.testuser)
+		assert.Equal(t, form.Name, env.testuser.Name)
+		assert.Equal(t, form.Email, env.testuser.Email)
 	})
 }
 
-func TestFindUserE2e(t *testing.T) {
+func TestFindUser(t *testing.T) {
+	testFindUser(t, userE2eEnv)
+}
+func testFindUser(t *testing.T, env *UserE2e) {
 	setUrl := func(id any) string {
-		return fmt.Sprintf("%s/api/users/%v", ts.URL, id)
+		return fmt.Sprintf("%s/api/users/%v", env.ts.URL, id)
 	}
 
 	cases := []struct {
@@ -132,7 +149,7 @@ func TestFindUserE2e(t *testing.T) {
 	})
 
 	t.Run("[200]user found", func(t *testing.T) {
-		url := setUrl(testuser.ID)
+		url := setUrl(env.testuser.ID)
 
 		resp, err := http.Get(url)
 		if err != nil {
@@ -144,8 +161,8 @@ func TestFindUserE2e(t *testing.T) {
 
 		user := DecodeResBody[models.User](t, resp)
 		assert.NotNil(t, user)
-		assert.Equal(t, testuser.ID, user.ID)
-		assert.Equal(t, testuser.Name, user.Name)
-		assert.Equal(t, testuser.Email, user.Email)
+		assert.Equal(t, env.testuser.ID, user.ID)
+		assert.Equal(t, env.testuser.Name, user.Name)
+		assert.Equal(t, env.testuser.Email, user.Email)
 	})
 }
