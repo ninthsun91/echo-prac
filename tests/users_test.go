@@ -5,18 +5,35 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
+	"os"
 	"testing"
 
 	"myapp/internal/db/models"
 	"myapp/internal/routes/users"
 
 	"github.com/stretchr/testify/assert"
+	"gorm.io/gorm"
 )
 
-func TestSignUpE2e(t *testing.T) {
-	ts, db := InitServer()
-	defer ts.Close()
+var testuser models.User
+var ts *httptest.Server
 
+func TestMain(m *testing.M) {
+	var db *gorm.DB
+	ts, db = InitServer()
+	code := m.Run()
+	teardown(ts, db)
+	os.Exit(code)
+}
+
+func teardown(ts *httptest.Server, db *gorm.DB) {
+	result := db.Unscoped().Delete(&testuser)
+	fmt.Printf("Cleanup test user %d: %v", testuser.ID, result.Error)
+	ts.Close()
+}
+
+func TestSignUpE2e(t *testing.T) {
 	url := fmt.Sprintf("%s/api/users", ts.URL)
 
 	cases := []struct {
@@ -66,22 +83,14 @@ func TestSignUpE2e(t *testing.T) {
 
 		assert.Equal(t, http.StatusCreated, resp.StatusCode)
 
-		user := DecodeResBody[models.User](t, resp)
-		assert.NotNil(t, user)
-		assert.Equal(t, form.Name, user.Name)
-		assert.Equal(t, form.Email, user.Email)
-
-		t.Cleanup(func() {
-			result := db.Unscoped().Delete(&user)
-			fmt.Println("Cleanup: ", user.ID, result.Error)
-		})
+		testuser = DecodeResBody[models.User](t, resp)
+		assert.NotNil(t, testuser)
+		assert.Equal(t, form.Name, testuser.Name)
+		assert.Equal(t, form.Email, testuser.Email)
 	})
 }
 
 func TestFindUserE2e(t *testing.T) {
-	ts, _ := InitServer()
-	defer ts.Close()
-
 	setUrl := func(id any) string {
 		return fmt.Sprintf("%s/api/users/%v", ts.URL, id)
 	}
@@ -123,8 +132,7 @@ func TestFindUserE2e(t *testing.T) {
 	})
 
 	t.Run("[200]user found", func(t *testing.T) {
-		userId := uint(1)
-		url := setUrl(userId)
+		url := setUrl(testuser.ID)
 
 		resp, err := http.Get(url)
 		if err != nil {
@@ -136,6 +144,8 @@ func TestFindUserE2e(t *testing.T) {
 
 		user := DecodeResBody[models.User](t, resp)
 		assert.NotNil(t, user)
-		assert.Equal(t, userId, user.ID)
+		assert.Equal(t, testuser.ID, user.ID)
+		assert.Equal(t, testuser.Name, user.Name)
+		assert.Equal(t, testuser.Email, user.Email)
 	})
 }
