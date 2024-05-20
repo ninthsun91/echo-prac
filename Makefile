@@ -20,7 +20,10 @@ run: build
 	fi
 
 test:
-	go test -v ./...
+	go test -v ./internal/...
+
+test-e2e:
+	go test -v ./tests/...
 
 clean:
 	go clean
