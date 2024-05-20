@@ -2,6 +2,7 @@ package users
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -25,10 +26,10 @@ func (uc *UsersController) Signup(c echo.Context) error {
 		c.Logger().Errorf("Failed to bind request body: %v", err)
 		return c.String(http.StatusBadRequest, "Bad Request")
 	}
-
+	fmt.Printf("body: %v\n", body)
 	if err := c.Validate(body); err != nil {
 		c.Logger().Errorf("Failed to validate request body: %v", err)
-		return err
+		return c.String(http.StatusBadRequest, "Bad Request")
 	}
 
 	user, err := uc.repo.Create(body.toUser())
