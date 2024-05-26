@@ -2,6 +2,7 @@ package posts
 
 import (
 	"errors"
+	"mime/multipart"
 	"net/http"
 	"strconv"
 
@@ -25,6 +26,13 @@ func (posts *PostsController) Create(c echo.Context) error {
 		c.Logger().Errorf("Failed to bind request body: %v", err)
 		return c.String(http.StatusBadRequest, "Bad Request")
 	}
+
+	file, err := c.FormFile("file")
+	if err != nil {
+		c.Logger().Errorf("Failed to get file: %v", err)
+		return c.String(http.StatusBadRequest, "Bad Request")
+	}
+	body.File = file
 
 	if err := c.Validate(body); err != nil {
 		c.Logger().Errorf("Failed to validate request body: %v", err)
@@ -109,8 +117,9 @@ func (posts *PostsController) Delete(c echo.Context) error {
 }
 
 type PostCreateRequestBody struct {
-	Title   string `json:"title" validate:"required"`
-	Content string `json:"content" validate:"required"`
+	Title   string                `form:"title" validate:"required"`
+	Content string                `form:"content" validate:"required"`
+	File    *multipart.FileHeader `form:"file" validate:"required"`
 }
 
 func (b PostCreateRequestBody) toPost(userId uint) models.Post {
