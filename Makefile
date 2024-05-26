@@ -20,10 +20,22 @@ run: build
 	fi
 
 test:
-	go test -v ./internal/...
+	@if [ -z "$(TEST)" ]; then \
+		echo "Running all tests under ./internal/...\n"; \
+		go test -v ./internal/...; \
+	else \
+		echo "Running tests under ./internal/... with pattern $(TEST)\n"; \
+		go test -v ./internal/... -run $(TEST); \
+	fi
 
 test-e2e:
-	go test -v ./tests/...
+	@if [ -z "$(TEST)" ]; then \
+		echo "Running all e2e tests...\n"; \
+		go test -v ./tests/...; \
+	else \
+		echo "Running e2e tests with pattern $(TEST)\n"; \
+		go test -v ./tests/... -run $(TEST); \
+	fi
 
 clean:
 	go clean
