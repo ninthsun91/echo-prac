@@ -13,7 +13,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func TestSignup(t *testing.T) {
+func TestUserSignup(t *testing.T) {
 	t.Run("Invalid request body", func(t *testing.T) {
 		body := strings.NewReader(`invalid json`)
 		c, rec := utils.InitContext(http.MethodPost, "/users", body)

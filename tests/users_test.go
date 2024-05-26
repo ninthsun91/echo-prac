@@ -44,7 +44,7 @@ func (env *UserE2e) teardown() {
 	env.ts.Close()
 }
 
-func TestSignup(t *testing.T) {
+func TestSignupUser(t *testing.T) {
 	testSignUp(t, userE2eEnv)
 }
 func testSignUp(t *testing.T, env *UserE2e) {
